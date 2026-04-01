@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Privacy Policy for Orchard Ops — the visual task scheduler for Mac.">
+    <title>Privacy Policy — Orchard Ops</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <style>
+        :root {
+            --sage: #7A8B6F;
+            --sage-light: #e8ede5;
+            --burgundy: #722F37;
+            --text: #1a1a1a;
+            --muted: #666;
+            --bg: #fafaf9;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+            color: var(--text);
+            background: var(--bg);
+            line-height: 1.6;
+        }
+        .header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(180deg, var(--sage-light) 0%, var(--bg) 100%);
+        }
+        .header a.back {
+            display: inline-block;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            color: var(--sage);
+            text-decoration: none;
+        }
+        .header a.back:hover { text-decoration: underline; }
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+        .header p {
+            font-size: 1.05rem;
+            color: var(--muted);
+        }
+        .content {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px 60px;
+        }
+        .content h2 {
+            font-size: 1.2rem;
+            margin: 32px 0 12px;
+            color: var(--sage);
+        }
+        .content h2:first-child {
+            margin-top: 0;
+        }
+        .content p, .content ul {
+            font-size: 0.95rem;
+            color: var(--muted);
+            line-height: 1.8;
+            margin-bottom: 12px;
+        }
+        .content ul {
+            padding-left: 20px;
+        }
+        .content li {
+            margin-bottom: 6px;
+        }
+        footer {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--muted);
+            font-size: 0.85rem;
+            border-top: 1px solid #e8e8e8;
+        }
+        footer a { color: var(--sage); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <a href="/" class="back">&larr; Back to Orchard Ops</a>
+    <h1>Privacy Policy</h1>
+    <p>Last updated: April 2, 2026</p>
+</div>
+
+<section class="content">
+
+    <h2>1. Overview</h2>
+    <p>Orchard Ops is a macOS application developed by Orchardworks ("we", "us", "our"). We are committed to protecting your privacy. This policy explains what data we collect and how we use it.</p>
+    <p><strong>The short version:</strong> Orchard Ops does not collect analytics, telemetry, or crash reports. Your tasks, scripts, and data stay on your Mac.</p>
+
+    <h2>2. Data We Collect</h2>
+
+    <p><strong>License verification</strong></p>
+    <p>When you activate or validate a Pro license, the app communicates with the Lemon Squeezy API (<code>api.lemonsqueezy.com</code>). This sends your license key and device hostname to verify your license. No other data is transmitted.</p>
+
+    <p><strong>Software update checks</strong></p>
+    <p>Orchard Ops uses Sparkle to check for updates. When checking for updates, a standard HTTP request is made to <code>orchard-ops.com/appcast.xml</code>. This request includes your IP address as part of normal network communication. No additional system information is sent.</p>
+
+    <p><strong>Website analytics</strong></p>
+    <p>The Orchard Ops website (<code>orchard-ops.com</code>) uses Cloudflare Web Analytics, which is privacy-friendly and does not use cookies or track individual visitors.</p>
+
+    <h2>3. Data We Do Not Collect</h2>
+    <ul>
+        <li>No usage analytics or telemetry</li>
+        <li>No crash reports</li>
+        <li>No information about your scheduled tasks or scripts</li>
+        <li>No personal information from the app</li>
+    </ul>
+
+    <h2>4. Gmail Feature</h2>
+    <p>Orchard Ops includes an optional Gmail template feature for sending scheduled emails. If you use this feature:</p>
+    <ul>
+        <li>Your Gmail address is stored locally in macOS UserDefaults</li>
+        <li>Your Google App Password is stored in the macOS Keychain, encrypted by the operating system</li>
+        <li>Emails are sent directly from your Mac to Gmail's SMTP servers — Orchardworks never sees or processes your email credentials or messages</li>
+    </ul>
+
+    <h2>5. Payment Information</h2>
+    <p>Pro license purchases are processed by <a href="https://www.lemonsqueezy.com" style="color: var(--sage);">Lemon Squeezy</a>. We do not collect or store your payment information (credit card numbers, billing address, etc.). Please refer to <a href="https://www.lemonsqueezy.com/privacy" style="color: var(--sage);">Lemon Squeezy's Privacy Policy</a> for how they handle payment data.</p>
+
+    <h2>6. Third-Party Services</h2>
+    <ul>
+        <li><strong>Lemon Squeezy</strong> — license management and payment processing</li>
+        <li><strong>Sparkle</strong> — software update framework (open source, no data collection)</li>
+        <li><strong>Cloudflare Web Analytics</strong> — website analytics (cookie-free, no personal data)</li>
+    </ul>
+
+    <h2>7. Data Storage</h2>
+    <p>All task configurations, execution logs, and preferences are stored locally on your Mac in <code>~/Library/Application Support/OrchardOps</code>. This data is never transmitted to us or any third party.</p>
+
+    <h2>8. Children's Privacy</h2>
+    <p>Orchard Ops is not directed at children under 13. We do not knowingly collect personal information from children.</p>
+
+    <h2>9. Changes to This Policy</h2>
+    <p>We may update this Privacy Policy from time to time. The updated version will be posted on this page with a revised date.</p>
+
+    <h2>10. Contact</h2>
+    <p>For questions about this Privacy Policy, contact us at <a href="mailto:support@orchard-ops.com" style="color: var(--sage);">support@orchard-ops.com</a>.</p>
+
+</section>
+
+<footer>
+    <p><a href="/">Orchard Ops</a> &middot; <a href="mailto:support@orchard-ops.com">support@orchard-ops.com</a><br>&copy; 2026 <a href="https://orchardworks.dev">Orchardworks</a>.</p>
+</footer>
+
+<!-- Cloudflare Web Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "02e7ad1f16374e31922ddbdb18c94238"}'></script><!-- End Cloudflare Web Analytics -->
+</body>
+</html>
