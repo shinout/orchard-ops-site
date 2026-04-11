@@ -7,11 +7,6 @@ on:
         description: 'Version number (e.g. 1.0.0)'
         required: true
         type: string
-      release_notes:
-        description: 'Release notes (shown in GitHub Release and Sparkle update dialog)'
-        required: false
-        type: string
-        default: ''
 
 concurrency:
   group: release
@@ -232,11 +227,13 @@ jobs:
             exit 1
           fi
 
-          # Write release notes for Sparkle (generate_appcast picks up .md files
-          # with the same basename as the archive)
-          NOTES="${{ inputs.release_notes }}"
-          if [ -n "$NOTES" ]; then
-            echo "$NOTES" > ./dist/OrchardOps.md
+          # Release notes: read from site repo release-notes/<version>.md if it exists
+          NOTES_FILE="${GITHUB_WORKSPACE}/site/release-notes/${VERSION}.md"
+          if [ -f "$NOTES_FILE" ]; then
+            cp "$NOTES_FILE" ./dist/OrchardOps.md
+            echo "Release notes loaded from release-notes/${VERSION}.md"
+          else
+            echo "No release notes file found at release-notes/${VERSION}.md"
           fi
 
           # Pass the EdDSA private key via stdin (Keychain is not available on CI)
@@ -248,13 +245,16 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          NOTES="${{ inputs.release_notes }}"
-          if [ -z "$NOTES" ]; then
-            NOTES="Orchard Ops ${VERSION}"
+          NOTES_FILE="${GITHUB_WORKSPACE}/site/release-notes/${VERSION}.md"
+          if [ -f "$NOTES_FILE" ]; then
+            gh release create "$TAG" "../app/dist/${DMG_NAME}.dmg" \
+              --title "$TAG" \
+              --notes-file "$NOTES_FILE"
+          else
+            gh release create "$TAG" "../app/dist/${DMG_NAME}.dmg" \
+              --title "$TAG" \
+              --notes "Orchard Ops ${VERSION}"
           fi
-          gh release create "$TAG" "../app/dist/${DMG_NAME}.dmg" \
-            --title "$TAG" \
-            --notes "$NOTES"
 
       # ── Update appcast on site ──────────────────────────────────
       - name: Update appcast.xml
