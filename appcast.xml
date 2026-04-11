@@ -3,28 +3,14 @@
     <channel>
         <title>Orchard Ops</title>
         <item>
-            <title>0.3.4</title>
-            <pubDate>Thu, 02 Apr 2026 15:18:04 +0900</pubDate>
-            <sparkle:version>8</sparkle:version>
-            <sparkle:shortVersionString>0.3.4</sparkle:shortVersionString>
+            <title>0.3.6</title>
+            <pubDate>Sat, 11 Apr 2026 15:14:01 +0000</pubDate>
+            <sparkle:version>9</sparkle:version>
+            <sparkle:shortVersionString>0.3.6</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/orchardworks/orchard-ops.com/releases/download/v0.3.4/OrchardOps.dmg" length="2165544" type="application/octet-stream" sparkle:edSignature="cRnBD0RSpEZDkI34QyZDZcIU/DJ0mneiGrrCSyCAP4nqw81+n09nC8mTuQhSXNGl51gkBPnNlFAkCSZboSbnDA=="/>
-        </item>
-        <item>
-            <title>0.3.3</title>
-            <pubDate>Wed, 01 Apr 2026 00:28:28 +0900</pubDate>
-            <sparkle:version>7</sparkle:version>
-            <sparkle:shortVersionString>0.3.3</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/orchardworks/orchard-ops.com/releases/download/v0.3.4/OrchardOps.dmg" length="2163048" type="application/octet-stream" sparkle:edSignature="giVBo2jt2YlIeSRwgDsStETfo25bgrJVDfc1udd24+wCd/ZlPUcrTKwXaKzxXmxdYHwT0nRtQPNd/ZvoTIhaAw=="/>
-        </item>
-        <item>
-            <title>0.3.2</title>
-            <pubDate>Tue, 31 Mar 2026 23:21:01 +0900</pubDate>
-            <sparkle:version>6</sparkle:version>
-            <sparkle:shortVersionString>0.3.2</sparkle:shortVersionString>
-            <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
-            <enclosure url="https://github.com/orchardworks/orchard-ops.com/releases/download/v0.3.4/OrchardOps.dmg" length="2161321" type="application/octet-stream" sparkle:edSignature="FjyJ0fBvntJUTKwc1x6J0kG6JfPCY5euyhwTOoYPnJwIlufRNdoCFp1hEzQ6YnCZS6e7BkVshP+82lwZvqyXBA=="/>
+            <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
+            <sparkle:releaseNotesLink>https://orchard-ops.com/OrchardOps.md</sparkle:releaseNotesLink>
+            <enclosure url="https://github.com/orchardworks/orchard-ops.com/releases/download/v0.3.6/OrchardOps.dmg" length="1643418" type="application/octet-stream" sparkle:edSignature="5lCTb1BhwN5bsWFzSg3YM/T8tnGSHRRll9Q4zXWIDZY+f+tGpuamztN5/pQigW65eGrMLbpBTEQPM1puQDZbBQ=="/>
         </item>
     </channel>
 </rss>
