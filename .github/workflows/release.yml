@@ -255,7 +255,7 @@ jobs:
           DMG_PATH="app/dist/${DMG_NAME}.dmg"
           DMG_SHA256=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
 
-          git clone "https://x-access-token:${TAP_PAT}@github.com/orchardworks/homebrew-tap.git" /tmp/homebrew-tap
+          git clone -q "https://x-access-token:${TAP_PAT}@github.com/orchardworks/homebrew-tap.git" /tmp/homebrew-tap
           cd /tmp/homebrew-tap
 
           CASK_FILE="Casks/orchard-ops.rb"
