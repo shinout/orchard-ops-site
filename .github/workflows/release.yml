@@ -36,12 +36,12 @@ jobs:
     steps:
       # ── Checkout ────────────────────────────────────────────────
       - name: Checkout site repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: site
 
       - name: Checkout app repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: orchardworks/orchard-ops
           token: ${{ secrets.PRIVATE_REPO_PAT }}
