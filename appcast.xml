@@ -3,14 +3,14 @@
     <channel>
         <title>Orchard Ops</title>
         <item>
-            <title>1.0.0</title>
-            <pubDate>Sat, 11 Apr 2026 15:23:48 +0000</pubDate>
-            <sparkle:version>10</sparkle:version>
-            <sparkle:shortVersionString>1.0.0</sparkle:shortVersionString>
+            <title>1.0.1</title>
+            <pubDate>Sat, 11 Apr 2026 16:39:44 +0000</pubDate>
+            <sparkle:version>11</sparkle:version>
+            <sparkle:shortVersionString>1.0.1</sparkle:shortVersionString>
             <sparkle:minimumSystemVersion>14.0</sparkle:minimumSystemVersion>
             <sparkle:hardwareRequirements>arm64</sparkle:hardwareRequirements>
             <sparkle:releaseNotesLink>https://orchard-ops.com/OrchardOps.md</sparkle:releaseNotesLink>
-            <enclosure url="https://github.com/orchardworks/orchard-ops.com/releases/download/v1.0.0/OrchardOps.dmg" length="1643388" type="application/octet-stream" sparkle:edSignature="FIQ1G6Nxb/uH9HS1v9biqk3zkIiL/W9ibrrzdEECXNatRVz/ZAIPR8sc81uCyFxLL8hWxQcMYgBzeoEUDmEKCQ=="/>
+            <enclosure url="https://github.com/orchardworks/orchard-ops.com/releases/download/v1.0.1/OrchardOps.dmg" length="1645111" type="application/octet-stream" sparkle:edSignature="2SRMI/YybW1pAqLX8olr4gKj4ej7xEqZGJweIBBfbqL06a5poG16/NypYaSw87NF33SYWtlTojJ4NXHGqFL+DA=="/>
         </item>
     </channel>
 </rss>
