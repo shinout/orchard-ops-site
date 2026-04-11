@@ -215,10 +215,8 @@ jobs:
             exit 1
           fi
 
-          # generate_appcast reads the private key from SPARKLE_KEY env var
-          # when the Keychain is not available
-          export SPARKLE_KEY
-          "$SPARKLE_BIN/generate_appcast" ./dist
+          # Pass the EdDSA private key via stdin (Keychain is not available on CI)
+          echo "$SPARKLE_KEY" | "$SPARKLE_BIN/generate_appcast" --ed-key-file - ./dist
 
       # ── GitHub Release ──────────────────────────────────────────
       - name: Create GitHub Release
