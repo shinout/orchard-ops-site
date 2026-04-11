@@ -237,7 +237,9 @@ jobs:
           fi
 
           # Pass the EdDSA private key via stdin (Keychain is not available on CI)
-          echo "$SPARKLE_KEY" | "$SPARKLE_BIN/generate_appcast" --ed-key-file - ./dist
+          # --embed-release-notes inlines the notes into the appcast XML so
+          # Sparkle doesn't need to fetch an external file from the website.
+          echo "$SPARKLE_KEY" | "$SPARKLE_BIN/generate_appcast" --ed-key-file - --embed-release-notes ./dist
 
       # ── GitHub Release ──────────────────────────────────────────
       - name: Create GitHub Release
