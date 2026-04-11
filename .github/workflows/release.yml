@@ -51,6 +51,18 @@ jobs:
           xcodebuild -version
           swift --version
 
+      # ── Validate input ────────────────────────────────────────────
+      - name: Validate version input
+        run: |
+          if [[ "$VERSION" =~ ^v ]]; then
+            echo "::error::Version must not start with 'v'. Enter '1.0.0', not 'v1.0.0'."
+            exit 1
+          fi
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Version must be in semver format (e.g. 1.0.0). Got: ${VERSION}"
+            exit 1
+          fi
+
       # ── Version bump ────────────────────────────────────────────
       - name: Bump version in project.yml
         working-directory: app
@@ -261,6 +273,8 @@ jobs:
           CASK_FILE="Casks/orchard-ops.rb"
           sed -i '' "s/version \".*\"/version \"${VERSION}\"/" "$CASK_FILE"
           sed -i '' "s/sha256 \".*\"/sha256 \"${DMG_SHA256}\"/" "$CASK_FILE"
+          # Ensure download URL points to the correct repo
+          sed -i '' 's|orchardworks/orchard-ops-site/|orchardworks/orchard-ops.com/|g' "$CASK_FILE"
 
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
