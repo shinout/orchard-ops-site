@@ -1,0 +1,293 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version number (e.g. 1.0.0)'
+        required: true
+        type: string
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: Build, sign, notarize & publish
+    runs-on: macos-15
+    timeout-minutes: 45
+    permissions:
+      contents: write
+
+    env:
+      SCHEME: OrchardOps
+      PROJECT: OrchardOps.xcodeproj
+      APP_NAME: "Orchard Ops"
+      DMG_NAME: OrchardOps
+      VERSION: ${{ inputs.version }}
+      TAG: v${{ inputs.version }}
+
+    steps:
+      # ── Checkout ────────────────────────────────────────────────
+      - name: Checkout site repo
+        uses: actions/checkout@v4
+        with:
+          path: site
+
+      - name: Checkout app repo
+        uses: actions/checkout@v4
+        with:
+          repository: orchardworks/orchard-ops
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          path: app
+
+      # ── Tools ───────────────────────────────────────────────────
+      - name: Install tools
+        run: brew install xcodegen create-dmg
+
+      - name: Show toolchain
+        run: |
+          xcodebuild -version
+          swift --version
+
+      # ── Version bump ────────────────────────────────────────────
+      - name: Bump version in project.yml
+        working-directory: app
+        run: |
+          # Read current CURRENT_PROJECT_VERSION and increment
+          CURRENT=$(grep 'CURRENT_PROJECT_VERSION:' project.yml | head -1 | sed 's/[^0-9]//g')
+          NEXT=$((CURRENT + 1))
+          echo "MARKETING_VERSION: ${VERSION}"
+          echo "CURRENT_PROJECT_VERSION: ${CURRENT} -> ${NEXT}"
+          echo "BUILD_NUMBER=${NEXT}" >> "$GITHUB_ENV"
+
+          sed -i '' "s/MARKETING_VERSION: \".*\"/MARKETING_VERSION: \"${VERSION}\"/" project.yml
+          sed -i '' "s/CURRENT_PROJECT_VERSION: .*/CURRENT_PROJECT_VERSION: ${NEXT}/" project.yml
+
+      - name: Generate Xcode project
+        working-directory: app
+        run: xcodegen generate
+
+      # ── Signing setup ───────────────────────────────────────────
+      - name: Import Developer ID certificate
+        env:
+          P12_BASE64: ${{ secrets.DEVELOPER_ID_P12 }}
+        run: |
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          KEYCHAIN_PASSWORD="$(openssl rand -base64 32)"
+
+          # Create temporary keychain
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 3600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Import certificate (exported with empty password)
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/cert.p12"
+          security import "$RUNNER_TEMP/cert.p12" \
+            -P "" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+
+          # Allow codesign to access without prompt
+          security set-key-partition-list -S apple-tool:,apple:,codesign: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+
+          # Add to search list
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
+          echo "KEYCHAIN_PATH=${KEYCHAIN_PATH}" >> "$GITHUB_ENV"
+
+      - name: Set up notarization credentials
+        env:
+          API_KEY_P8: ${{ secrets.APPLE_API_KEY_P8 }}
+        run: |
+          mkdir -p ~/private_keys
+          echo "$API_KEY_P8" | base64 --decode > ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8
+
+      # ── Build & Archive ─────────────────────────────────────────
+      - name: Archive
+        working-directory: app
+        run: |
+          xcodebuild archive \
+            -project "$PROJECT" \
+            -scheme "$SCHEME" \
+            -configuration Release \
+            -archivePath "/tmp/${DMG_NAME}.xcarchive" \
+            -quiet
+
+      # ── Sign ────────────────────────────────────────────────────
+      - name: Sign app bundle
+        working-directory: app
+        run: |
+          ARCHIVE_PATH="/tmp/${DMG_NAME}.xcarchive"
+          EXPORT_PATH="/tmp/${DMG_NAME}Export"
+          SIGN_IDENTITY="Developer ID Application"
+
+          rm -rf "$EXPORT_PATH"
+          mkdir -p "$EXPORT_PATH"
+          cp -R "${ARCHIVE_PATH}/Products/Applications/${APP_NAME}.app" "${EXPORT_PATH}/"
+
+          APP_BUNDLE="${EXPORT_PATH}/${APP_NAME}.app"
+
+          # Sign nested binaries (inside-out)
+          find "$APP_BUNDLE" -type f -perm +111 -o -name "*.dylib" | while read -r binary; do
+            codesign --force --sign "$SIGN_IDENTITY" --timestamp --options runtime "$binary" 2>/dev/null || true
+          done
+          find "$APP_BUNDLE" -name "*.xpc" -o -name "*.app" | sort -r | while read -r bundle; do
+            [ "$bundle" = "$APP_BUNDLE" ] && continue
+            codesign --force --sign "$SIGN_IDENTITY" --timestamp --options runtime "$bundle"
+          done
+          find "$APP_BUNDLE" -name "*.framework" | while read -r fw; do
+            codesign --force --sign "$SIGN_IDENTITY" --timestamp --options runtime "$fw"
+          done
+          codesign --force --sign "$SIGN_IDENTITY" --timestamp --options runtime \
+            --entitlements "OrchardOps/Resources/OrchardOps.entitlements" "$APP_BUNDLE"
+
+          codesign --verify --deep --strict "$APP_BUNDLE"
+
+      # ── Notarize app ────────────────────────────────────────────
+      - name: Notarize app
+        run: |
+          EXPORT_PATH="/tmp/${DMG_NAME}Export"
+          ditto -c -k --keepParent "${EXPORT_PATH}/${APP_NAME}.app" /tmp/${DMG_NAME}-notarize.zip
+
+          xcrun notarytool submit /tmp/${DMG_NAME}-notarize.zip \
+            --key ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 \
+            --key-id ${{ secrets.APPLE_API_KEY_ID }} \
+            --issuer ${{ secrets.APPLE_API_ISSUER_ID }} \
+            --wait
+
+          xcrun stapler staple "${EXPORT_PATH}/${APP_NAME}.app"
+
+      # ── Create DMG ──────────────────────────────────────────────
+      - name: Create DMG
+        working-directory: app
+        run: |
+          EXPORT_PATH="/tmp/${DMG_NAME}Export"
+          mkdir -p ./dist
+          STAGING="/tmp/${DMG_NAME}-dmg-staging"
+          rm -rf "$STAGING"
+          mkdir -p "$STAGING"
+          cp -R "${EXPORT_PATH}/${APP_NAME}.app" "$STAGING/"
+
+          create-dmg \
+            --volname "$APP_NAME" \
+            --background "scripts/dmg-background.png" \
+            --window-pos 200 120 \
+            --window-size 600 400 \
+            --icon-size 80 \
+            --icon "${APP_NAME}.app" 150 200 \
+            --hide-extension "${APP_NAME}.app" \
+            --app-drop-link 450 200 \
+            --no-internet-enable \
+            "./dist/${DMG_NAME}.dmg" \
+            "$STAGING"
+
+          rm -rf "$STAGING"
+
+      # ── Notarize DMG ────────────────────────────────────────────
+      - name: Notarize DMG
+        working-directory: app
+        run: |
+          xcrun notarytool submit "./dist/${DMG_NAME}.dmg" \
+            --key ~/private_keys/AuthKey_${{ secrets.APPLE_API_KEY_ID }}.p8 \
+            --key-id ${{ secrets.APPLE_API_KEY_ID }} \
+            --issuer ${{ secrets.APPLE_API_ISSUER_ID }} \
+            --wait
+
+          xcrun stapler staple "./dist/${DMG_NAME}.dmg"
+
+      # ── Generate appcast ────────────────────────────────────────
+      - name: Generate appcast
+        working-directory: app
+        env:
+          SPARKLE_KEY: ${{ secrets.SPARKLE_PRIVATE_KEY }}
+        run: |
+          # Resolve SPM packages to get Sparkle tools
+          xcodebuild -project "$PROJECT" -scheme "$SCHEME" -resolvePackageDependencies
+
+          SPARKLE_BIN="$(find ~/Library/Developer/Xcode/DerivedData/OrchardOps-*/SourcePackages/artifacts/sparkle/Sparkle/bin -maxdepth 0 2>/dev/null | head -1)"
+          if [ -z "$SPARKLE_BIN" ]; then
+            echo "Error: Sparkle generate_appcast not found"
+            exit 1
+          fi
+
+          # generate_appcast reads the private key from SPARKLE_KEY env var
+          # when the Keychain is not available
+          export SPARKLE_KEY
+          "$SPARKLE_BIN/generate_appcast" ./dist
+
+      # ── GitHub Release ──────────────────────────────────────────
+      - name: Create GitHub Release
+        working-directory: site
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "$TAG" "../app/dist/${DMG_NAME}.dmg" \
+            --title "$TAG" \
+            --notes "Orchard Ops ${VERSION}"
+
+      # ── Update appcast on site ──────────────────────────────────
+      - name: Update appcast.xml
+        working-directory: site
+        run: |
+          cp ../app/dist/appcast.xml ./appcast.xml
+
+          # Rewrite DMG URLs to point to GitHub Releases on this repo
+          sed -i '' 's|url="[^"]*OrchardOps\.dmg"|url="https://github.com/orchardworks/orchard-ops.com/releases/download/'"${TAG}"'/OrchardOps.dmg"|g' appcast.xml
+
+      - name: Commit and push site
+        working-directory: site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add appcast.xml
+          git diff --cached --quiet && echo "No appcast changes" && exit 0
+          git commit -m "Update appcast for ${TAG}"
+          git push
+
+      # ── Update Homebrew tap ─────────────────────────────────────
+      - name: Update Homebrew cask
+        env:
+          TAP_PAT: ${{ secrets.HOMEBREW_TAP_PAT }}
+        run: |
+          DMG_PATH="app/dist/${DMG_NAME}.dmg"
+          DMG_SHA256=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+
+          git clone "https://x-access-token:${TAP_PAT}@github.com/orchardworks/homebrew-tap.git" /tmp/homebrew-tap
+          cd /tmp/homebrew-tap
+
+          CASK_FILE="Casks/orchard-ops.rb"
+          sed -i '' "s/version \".*\"/version \"${VERSION}\"/" "$CASK_FILE"
+          sed -i '' "s/sha256 \".*\"/sha256 \"${DMG_SHA256}\"/" "$CASK_FILE"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add "$CASK_FILE"
+          git diff --cached --quiet && echo "No cask changes" && exit 0
+          git commit -m "Update orchard-ops to ${VERSION}"
+          git push
+
+      # ── Commit version bump back to app repo ────────────────────
+      - name: Push version bump to app repo
+        working-directory: app
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add project.yml
+          git diff --cached --quiet && echo "No version changes" && exit 0
+          git commit -m "Bump version to ${VERSION} (build ${BUILD_NUMBER})"
+          git push
+
+      # ── Cleanup ─────────────────────────────────────────────────
+      - name: Cleanup keychain
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_PATH:-}" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          fi
+          rm -f ~/private_keys/AuthKey_*.p8
+          rm -f "$RUNNER_TEMP/cert.p12"
